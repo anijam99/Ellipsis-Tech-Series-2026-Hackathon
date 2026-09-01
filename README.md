@@ -1,0 +1,1 @@
+# Ellipsis-Tech-Series-2026-Hackathon
