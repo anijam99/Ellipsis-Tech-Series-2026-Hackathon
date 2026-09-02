@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { CompanionState } from '../types';
 import { playSound } from '../utils/soundEffects';
 
@@ -18,6 +18,13 @@ interface ClickParticle {
   emoji: string;
 }
 
+const MOOD_MESSAGES: Record<CompanionState, string[]> = {
+  healthy: ['Doing great! 🍧', 'BTO on track ✨', 'Keep it up! 💪', 'Savings = good days 🏡'],
+  slipping: ['Hmm, wavering a bit 😕', 'Let\'s get back on track!', 'Small wins count too 🌱'],
+  melting: ['Feeling a bit stretched 😰', 'Maybe wait on that purchase?', 'BTO needs you! 🏗️'],
+  melted: ['Oops, rough week 🥺', 'Tomorrow\'s a new start 💙', 'JITAI check before buying!'],
+};
+
 export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
   state = 'healthy',
   size = 'md',
@@ -27,8 +34,17 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
   className = '',
 }) => {
   const [isSquishing, setIsSquishing] = useState(false);
+  const [isDoubleBouncing, setIsDoubleBouncing] = useState(false);
   const [isReactingFace, setIsReactingFace] = useState(false);
   const [particles, setParticles] = useState<ClickParticle[]>([]);
+  const [showMoodTooltip, setShowMoodTooltip] = useState(false);
+  const [moodMessage, setMoodMessage] = useState('');
+  const [eyeOffset, setEyeOffset] = useState({ x: 0, y: 0 });
+  const [isWiggling, setIsWiggling] = useState(false);
+
+  const svgRef = useRef<SVGSVGElement>(null);
+  const lastClickTime = useRef<number>(0);
+  const wiggleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const sizeMap = {
     sm: 'w-12 h-12',
@@ -64,42 +80,124 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
     },
   };
 
+  // Periodic idle wiggle for hero / interactive companions
+  useEffect(() => {
+    if (size !== 'hero' && !interactive) return;
+    const scheduleWiggle = () => {
+      const delay = 4000 + Math.random() * 5000;
+      wiggleTimerRef.current = setTimeout(() => {
+        setIsWiggling(true);
+        setTimeout(() => setIsWiggling(false), 800);
+        scheduleWiggle();
+      }, delay);
+    };
+    scheduleWiggle();
+    return () => { if (wiggleTimerRef.current) clearTimeout(wiggleTimerRef.current); };
+  }, [size, interactive]);
+
+  // Eye tracking (hero size only) — follows mouse within the SVG
+  const handleMouseMove = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
+    if (size !== 'hero' && size !== 'lg') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = (e.clientX - cx) / (rect.width / 2);
+    const dy = (e.clientY - cy) / (rect.height / 2);
+    const max = 2.5;
+    setEyeOffset({
+      x: Math.max(-max, Math.min(max, dx * max)),
+      y: Math.max(-max, Math.min(max, dy * max)),
+    });
+  }, [size]);
+
+  const handleMouseLeave = useCallback(() => {
+    setEyeOffset({ x: 0, y: 0 });
+    setShowMoodTooltip(false);
+  }, []);
+
+  const handleMouseEnter = useCallback(() => {
+    if (interactive || onClick) {
+      const messages = MOOD_MESSAGES[state];
+      setMoodMessage(messages[Math.floor(Math.random() * messages.length)]);
+      setShowMoodTooltip(true);
+    }
+  }, [interactive, onClick, state]);
+
   const handleClick = (e: React.MouseEvent) => {
     if (!interactive && !onClick) return;
-    playSound.pop();
-    setIsSquishing(true);
-    setIsReactingFace(true);
-    setTimeout(() => setIsSquishing(false), 450);
-    setTimeout(() => setIsReactingFace(false), 1400);
+
+    const now = Date.now();
+    const timeSinceLast = now - lastClickTime.current;
+    lastClickTime.current = now;
+
+    // Double-tap detection (within 400ms)
+    if (timeSinceLast < 400) {
+      playSound.coin?.();
+      setIsDoubleBouncing(true);
+      setIsReactingFace(true);
+      setTimeout(() => setIsDoubleBouncing(false), 750);
+      setTimeout(() => setIsReactingFace(false), 1800);
+    } else {
+      playSound.pop();
+      setIsSquishing(true);
+      setIsReactingFace(true);
+      setTimeout(() => setIsSquishing(false), 450);
+      setTimeout(() => setIsReactingFace(false), 1400);
+    }
 
     // Spawn floating tap particles
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    const emojis = state === 'healthy' ? ['✨', '🍧', '💖', '⭐', '🥰'] : state === 'melting' ? ['💧', '🥺', '🌧️'] : ['🥣', '💫', '👀'];
-    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-    
-    const newParticle: ClickParticle = {
-      id: Date.now() + Math.random(),
-      x,
-      y,
-      emoji: randomEmoji,
+
+    const emojiPools: Record<CompanionState, string[]> = {
+      healthy: ['✨', '🍧', '💖', '⭐', '🥰', '💰', '🏡', '🌟'],
+      slipping: ['😕', '💧', '🌱', '💪', '⚡'],
+      melting: ['💧', '🥺', '🌧️', '😰', '🏗️'],
+      melted: ['🥣', '💫', '👀', '💙', '🆘'],
     };
 
-    setParticles(prev => [...prev.slice(-4), newParticle]);
-    setTimeout(() => {
-      setParticles(prev => prev.filter(p => p.id !== newParticle.id));
-    }, 1500);
+    const emojis = emojiPools[state];
+    const count = timeSinceLast < 400 ? 3 : 1;
+
+    for (let i = 0; i < count; i++) {
+      const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+      const jitter = i * 20 - count * 10;
+      const newParticle: ClickParticle = {
+        id: Date.now() + i + Math.random(),
+        x: x + jitter,
+        y: y - i * 10,
+        emoji: randomEmoji,
+      };
+      setParticles(prev => [...prev.slice(-6), newParticle]);
+      setTimeout(() => {
+        setParticles(prev => prev.filter(p => p.id !== newParticle.id));
+      }, 1500);
+    }
 
     if (onClick) onClick();
   };
 
+  const animationClass = isDoubleBouncing
+    ? 'animate-double-bounce'
+    : isWiggling
+    ? 'animate-wiggle'
+    : isSquishing
+    ? 'animate-squish'
+    : '';
+
+  // Eye pupil offset applied to SVG elements
+  const ex = eyeOffset.x;
+  const ey = eyeOffset.y;
+
   return (
     <div
       onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       className={`inline-flex flex-col items-center justify-center select-none transition-all duration-300 relative ${
         interactive || onClick ? 'cursor-pointer hover:scale-105 active:scale-95' : ''
-      } ${isSquishing ? 'animate-squish' : ''} ${className}`}
+      } ${animationClass} ${className}`}
     >
       {/* Floating Click Particles */}
       {particles.map(p => (
@@ -112,9 +210,22 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
         </span>
       ))}
 
+      {/* Mood Tooltip */}
+      {showMoodTooltip && moodMessage && (
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-40 pointer-events-none animate-slide-up-fade">
+          <div className="bg-slate-900/90 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1.5 rounded-xl whitespace-nowrap shadow-lg">
+            {moodMessage}
+            {/* Speech bubble tail */}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-slate-900/90" />
+          </div>
+        </div>
+      )}
+
       <div className={`relative ${sizeMap[size]} flex items-center justify-center`}>
         <svg
+          ref={svgRef}
           viewBox="28 28 184 184"
+          onMouseMove={handleMouseMove}
           className={`w-full h-full drop-shadow-md select-none overflow-visible ${
             state === 'melting' ? 'animate-shiver' : ''
           }`}
@@ -190,7 +301,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
               <ellipse cx="120" cy="115" rx="72" ry="68" fill="url(#healthyIce)" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.05))" />
 
               {/* Colorful Syrups on Ice */}
-              <g className="animate-jelly">
+              <g className="animate-pulse-soft">
                 <path
                   d="M60 100 C75 60, 165 60, 180 100 C165 92, 140 108, 120 95 C100 108, 75 92, 60 100 Z"
                   fill="url(#healthyPink)"
@@ -228,23 +339,19 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                   <ellipse cx="154" cy="126" rx="9" ry="6" fill="#FA4A72" opacity="0.9" />
 
                   {/* Wide Joyful Open Mouth :D */}
-                  <path
-                    d="M110 124 Q120 144 130 124 Z"
-                    fill="#362E24"
-                  />
-                  <path
-                    d="M114 132 Q120 142 126 132 Z"
-                    fill="#FA4A72"
-                  />
+                  <path d="M110 124 Q120 144 130 124 Z" fill="#362E24" />
+                  <path d="M114 132 Q120 142 126 132 Z" fill="#FA4A72" />
                 </g>
               ) : (
-                /* Idle Face with Natural Blinking Eyes */
+                /* Idle Face with Natural Blinking Eyes + eye tracking */
                 <g>
-                  <g className="animate-blink">
+                  <g className="animate-blink" style={{ transformOrigin: '98px 118px' }}>
                     <ellipse cx="98" cy="118" rx="5" ry="6" fill="#362E24" />
-                    <circle cx="96" cy="116" r="1.5" fill="#FFFCF6" />
+                    <circle cx={96 + ex} cy={116 + ey} r="1.5" fill="#FFFCF6" />
+                  </g>
+                  <g className="animate-blink" style={{ transformOrigin: '142px 118px', animationDelay: '0.1s' }}>
                     <ellipse cx="142" cy="118" rx="5" ry="6" fill="#362E24" />
-                    <circle cx="140" cy="116" r="1.5" fill="#FFFCF6" />
+                    <circle cx={140 + ex} cy={116 + ey} r="1.5" fill="#FFFCF6" />
                   </g>
 
                   {/* Rosy Cheeks */}
@@ -294,29 +401,28 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                 />
               </g>
 
-              <circle cx="68" cy="138" r="3" fill="#FCA5A5" className="animate-syrup-drip" />
+              <circle cx="68" cy="138" r="3" fill="#FCA5A5" className="animate-drip" />
               <circle cx="120" cy="70" r="6" fill="#9B2C2C" opacity="0.9" />
               <circle cx="132" cy="74" r="5" fill="#742A2A" opacity="0.9" />
 
-              {/* Face on Slipping: Surprised on tap */}
+              {/* Face on Slipping */}
               {isReactingFace ? (
                 <g>
-                  {/* Surprised / Curious eyes */}
                   <ellipse cx="98" cy="120" rx="6" ry="7" fill="#453A2D" />
-                  <circle cx="96" cy="118" r="2" fill="#FFFCF6" />
+                  <circle cx={96 + ex} cy={118 + ey} r="2" fill="#FFFCF6" />
                   <ellipse cx="142" cy="120" rx="6" ry="7" fill="#453A2D" />
-                  <circle cx="140" cy="118" r="2" fill="#FFFCF6" />
-
-                  {/* Little 'o' mouth */}
+                  <circle cx={140 + ex} cy={118 + ey} r="2" fill="#FFFCF6" />
                   <ellipse cx="120" cy="130" rx="4" ry="5" fill="#453A2D" />
                 </g>
               ) : (
                 <g>
-                  <g className="animate-blink">
+                  <g className="animate-blink" style={{ transformOrigin: '98px 122px' }}>
                     <ellipse cx="98" cy="122" rx="4.5" ry="5.5" fill="#453A2D" />
-                    <circle cx="96" cy="120" r="1.2" fill="#FFFCF6" />
+                    <circle cx={96 + ex} cy={120 + ey} r="1.2" fill="#FFFCF6" />
+                  </g>
+                  <g className="animate-blink" style={{ transformOrigin: '142px 122px', animationDelay: '0.15s' }}>
                     <ellipse cx="142" cy="122" rx="4.5" ry="5.5" fill="#453A2D" />
-                    <circle cx="140" cy="120" r="1.2" fill="#FFFCF6" />
+                    <circle cx={140 + ex} cy={120 + ey} r="1.2" fill="#FFFCF6" />
                   </g>
                   <ellipse cx="88" cy="128" rx="5" ry="3.5" fill="#FF8EA3" opacity="0.5" />
                   <ellipse cx="152" cy="128" rx="5" ry="3.5" fill="#FF8EA3" opacity="0.5" />
@@ -350,8 +456,8 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                 fill="#FB7185"
               />
 
-              <ellipse cx="78" cy="166" rx="2.5" ry="3.5" fill="#FB7185" className="animate-syrup-drip" />
-              <ellipse cx="160" cy="164" rx="2.5" ry="3.5" fill="#FB7185" className="animate-syrup-drip" />
+              <ellipse cx="78" cy="166" rx="2.5" ry="3.5" fill="#FB7185" className="animate-drip" />
+              <ellipse cx="160" cy="164" rx="2.5" ry="3.5" fill="#FB7185" className="animate-drip" />
 
               <circle cx="114" cy="94" r="5.5" fill="#9B2C2C" />
               <circle cx="126" cy="98" r="5" fill="#742A2A" />
@@ -361,6 +467,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
               <path d="M92 128 Q98 124 104 128" stroke="#453A2D" strokeWidth="3" strokeLinecap="round" fill="none" />
               <path d="M136 128 Q142 124 148 128" stroke="#453A2D" strokeWidth="3" strokeLinecap="round" fill="none" />
 
+              {/* Sad mouth */}
               <path
                 d="M112 136 Q120 130 128 136"
                 stroke="#453A2D"
@@ -369,6 +476,7 @@ export const CompanionAvatar: React.FC<CompanionAvatarProps> = ({
                 fill="none"
               />
 
+              {/* Teardrop */}
               <path
                 d="M162 110 C162 110 168 118 168 122 C168 125 165 127 162 127 C159 127 156 125 156 122 C156 118 162 110 162 110 Z"
                 fill="#60A5FA"

@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FeedItem, SocialPlatform } from '../../types';
-import { 
-  Sparkles, 
-  Share2, 
-  Heart, 
-  Bookmark, 
-  TrendingUp, 
-  ExternalLink, 
-  UserCheck, 
+import {
+  Sparkles,
+  Share2,
+  Heart,
+  Bookmark,
+  UserCheck,
   UserPlus,
   Play,
   MessageCircle,
@@ -15,7 +13,8 @@ import {
   CheckCircle2,
   ThumbsUp,
   X,
-  Compass
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { playSound } from '../../utils/soundEffects';
 import confetti from 'canvas-confetti';
@@ -30,25 +29,59 @@ export const FeedScreen: React.FC<FeedScreenProps> = ({
   onToggleFollow,
 }) => {
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
-  const [selectedTopic, setSelectedTopic] = useState<string>('All');
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set(['f1']));
   const [activeMediaModal, setActiveMediaModal] = useState<FeedItem | null>(null);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set(['f1', 'f3']));
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const platformTabs = [
-    { id: 'all', label: '🌟 All Feeds' },
+    { id: 'all', label: '🌟 All' },
     { id: 'tiktok', label: '🎵 TikTok' },
-    { id: 'instagram', label: '📸 Instagram Reels' },
-    { id: 'youtube', label: '▶️ YouTube Shorts' },
-    { id: 'reddit', label: '💬 Reddit r/singaporefi' },
-    { id: 'moneysense', label: '🇸🇬 MoneySense SG' },
+    { id: 'instagram', label: '📸 Reels' },
+    { id: 'youtube', label: '▶️ Shorts' },
+    { id: 'reddit', label: '💬 Reddit' },
+    { id: 'moneysense', label: '🇸🇬 Official' },
   ];
 
   const filteredItems = feedItems.filter(item => {
-    const matchesPlatform = selectedPlatform === 'all' || item.platform === selectedPlatform;
-    const matchesTopic = selectedTopic === 'All' || item.tag === selectedTopic;
-    return matchesPlatform && matchesTopic;
+    return selectedPlatform === 'all' || item.platform === selectedPlatform;
   });
+
+  // Reset scroll position when filter changes
+  useEffect(() => {
+    setCurrentIndex(0);
+    if (containerRef.current) {
+      containerRef.current.scrollTo({ top: 0, behavior: 'instant' });
+    }
+  }, [selectedPlatform]);
+
+  // IntersectionObserver to track which card is visible
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const idx = cardRefs.current.findIndex(r => r === entry.target);
+            if (idx !== -1) setCurrentIndex(idx);
+          }
+        });
+      },
+      { root: containerRef.current, threshold: 0.6 }
+    );
+    cardRefs.current.forEach(ref => { if (ref) observer.observe(ref); });
+    return () => observer.disconnect();
+  }, [filteredItems]);
+
+  const scrollToIndex = (idx: number) => {
+    const el = cardRefs.current[idx];
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   const toggleBookmark = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -73,7 +106,8 @@ export const FeedScreen: React.FC<FeedScreenProps> = ({
         confetti({
           particleCount: 30,
           spread: 45,
-          colors: ['#E4657F', '#FDA4AF']
+          colors: ['#E4657F', '#FDA4AF'],
+          origin: { x: (e.clientX / window.innerWidth), y: (e.clientY / window.innerHeight) }
         });
       }
       return next;
@@ -83,198 +117,228 @@ export const FeedScreen: React.FC<FeedScreenProps> = ({
   const getPlatformBadge = (platform: SocialPlatform) => {
     switch (platform) {
       case 'tiktok':
-        return <span className="bg-black text-white px-2 py-0.5 rounded-full text-[10px] font-black flex items-center gap-1">🎵 TikTok</span>;
+        return <span className="bg-black/70 backdrop-blur-md text-white px-2 py-0.5 rounded-full text-[10px] font-black flex items-center gap-1">🎵 TikTok</span>;
       case 'instagram':
         return <span className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">📸 Reels</span>;
       case 'youtube':
-        return <span className="bg-red-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">▶️ Shorts</span>;
+        return <span className="bg-red-600/80 backdrop-blur-md text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">▶️ Shorts</span>;
       case 'reddit':
-        return <span className="bg-orange-600 text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">💬 Reddit</span>;
+        return <span className="bg-orange-600/80 backdrop-blur-md text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">💬 Reddit</span>;
       case 'moneysense':
-        return <span className="bg-emerald-700 text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">🇸🇬 Official</span>;
+        return <span className="bg-emerald-700/80 backdrop-blur-md text-white px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1">🇸🇬 Official</span>;
     }
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto [&>*]:shrink-0 px-5 py-4 pb-24 space-y-4 select-none">
-      {/* Header */}
-      <div className="space-y-1">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            Financial Feed
-          </h1>
-          <span className="text-xs font-bold text-pink-700 bg-pink-100/80 px-2.5 py-1 rounded-full border border-pink-200">
-            Social Media Aggregator
-          </span>
-        </div>
-        <p className="text-xs text-slate-500 font-medium">
-          Curated short-form creator reels, Reddit discussions & GovTech guides
-        </p>
-      </div>
+    <div className="relative h-full flex flex-col overflow-hidden bg-black select-none">
+      {/* Floating Platform Filter */}
+      <div className="absolute top-0 left-0 right-0 z-30 px-3 pt-2 pb-1 pointer-events-none">
+        <div className="flex items-center justify-between pointer-events-auto">
+          {/* Title pill */}
+          <div className="bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-2xl flex items-center gap-1.5">
+            <span className="text-white font-black text-sm">Financial Feed</span>
+          </div>
 
-      {/* Platform Filter Scrollbar */}
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
-        {platformTabs.map(tab => (
+          {/* Filter toggle button */}
           <button
-            key={tab.id}
-            onClick={() => {
-              playSound.pop();
-              setSelectedPlatform(tab.id);
-            }}
-            className={`px-3 py-1.5 rounded-full font-bold whitespace-nowrap transition-all text-xs ${
-              selectedPlatform === tab.id
-                ? 'bg-slate-900 text-white shadow-xs'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
+            onClick={() => { playSound.pop(); setShowFilters(f => !f); }}
+            className="bg-black/50 backdrop-blur-md text-white px-3 py-1.5 rounded-2xl text-xs font-bold flex items-center gap-1"
           >
-            {tab.label}
+            {platformTabs.find(t => t.id === selectedPlatform)?.label ?? '🌟 All'}
+            <ChevronDown className={`w-3 h-3 transition-transform ${showFilters ? 'rotate-180' : ''}`} />
           </button>
-        ))}
+        </div>
+
+        {/* Expandable filter row */}
+        {showFilters && (
+          <div className="mt-2 flex gap-1.5 overflow-x-auto scrollbar-none pointer-events-auto pb-1 animate-slide-up-fade">
+            {platformTabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => { playSound.pop(); setSelectedPlatform(tab.id); setShowFilters(false); }}
+                className={`px-3 py-1.5 rounded-full font-bold whitespace-nowrap text-[11px] transition-all ${
+                  selectedPlatform === tab.id
+                    ? 'bg-pink-500 text-white shadow-sm'
+                    : 'bg-black/60 backdrop-blur-md text-white/80 hover:bg-white/20'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Feed Cards */}
-      <div className="space-y-4">
-        {filteredItems.map(item => {
+      {/* Reel scroll container */}
+      <div
+        ref={containerRef}
+        className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-none"
+        style={{ scrollSnapType: 'y mandatory' }}
+      >
+        {filteredItems.length === 0 && (
+          <div className="h-full flex items-center justify-center text-white/60 text-sm font-medium">
+            No posts for this filter
+          </div>
+        )}
+
+        {filteredItems.map((item, idx) => {
           const isSaved = bookmarkedIds.has(item.id);
           const isLiked = likedIds.has(item.id);
 
           return (
             <div
               key={item.id}
+              ref={el => { cardRefs.current[idx] = el; }}
+              className="relative h-full w-full snap-start snap-always shrink-0 overflow-hidden"
+              style={{ scrollSnapAlign: 'start' }}
               onClick={() => {
                 playSound.pop();
                 setActiveMediaModal(item);
               }}
-              className="bg-white rounded-3xl p-4.5 border border-slate-100 shadow-sm space-y-3 hover:border-pink-200 hover:shadow-md transition-all cursor-pointer group"
             >
-              {/* Creator Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-pink-400 to-amber-400 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+              {/* Full-bleed gradient background */}
+              <div
+                className={`absolute inset-0 bg-gradient-to-b ${item.coverGradient || 'from-pink-500 to-rose-900'}`}
+              />
+              {/* Dark vignette for text readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
+
+              {/* Center content: emoji + play */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none">
+                <span className="text-7xl drop-shadow-xl">{item.mediaEmoji || '📱'}</span>
+                <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                  <Play className="w-7 h-7 fill-white text-white ml-1" />
+                </div>
+                <span className="text-white/80 text-xs font-semibold drop-shadow">Tap to play</span>
+              </div>
+
+              {/* Bottom-left: creator info + title */}
+              <div className="absolute bottom-0 left-0 right-14 p-4 pb-6 space-y-2 pointer-events-none">
+                {/* Platform badge */}
+                <div>{getPlatformBadge(item.platform)}</div>
+
+                {/* Creator */}
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-400 to-amber-400 text-white flex items-center justify-center font-bold text-xs shadow-sm shrink-0">
                     {item.creator.slice(0, 2)}
                   </div>
                   <div>
                     <div className="flex items-center gap-1">
-                      <h3 className="text-xs font-bold text-slate-900">{item.creator}</h3>
+                      <span className="text-white font-bold text-xs drop-shadow">{item.creator}</span>
                       {item.verified && (
-                        <CheckCircle2 className="w-3 h-3 text-blue-500 fill-blue-500" />
+                        <CheckCircle2 className="w-3 h-3 text-blue-400 fill-blue-400" />
                       )}
                     </div>
-                    <p className="text-[11px] text-slate-400 font-medium">{item.handle}</p>
+                    <span className="text-white/70 text-[10px]">{item.handle}</span>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {getPlatformBadge(item.platform)}
-
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       playSound.pop();
                       onToggleFollow(item.id);
                     }}
-                    className={`px-2 py-1 rounded-xl text-[11px] font-bold transition-all flex items-center gap-1 ${
+                    className={`ml-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold transition-all pointer-events-auto ${
                       item.isFollowed
-                        ? 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        : 'bg-pink-50 text-pink-600 hover:bg-pink-100 border border-pink-200'
+                        ? 'bg-white/20 text-white/80'
+                        : 'bg-white text-black'
                     }`}
                   >
-                    {item.isFollowed ? (
-                      <>
-                        <UserCheck className="w-3 h-3 text-emerald-600" /> Following
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="w-3 h-3" /> Follow
-                      </>
-                    )}
+                    {item.isFollowed ? <><UserCheck className="w-3 h-3 inline mr-0.5" />Following</> : <><UserPlus className="w-3 h-3 inline mr-0.5" />Follow</>}
                   </button>
                 </div>
-              </div>
 
-              {/* Title & Tag */}
-              <div className="space-y-1">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-pink-600 bg-pink-50 px-2 py-0.5 rounded-md">
-                  {item.tag}
-                </span>
-                <h2 className="text-sm font-bold text-slate-900 leading-snug group-hover:text-pink-600 transition-colors">
+                {/* Title */}
+                <h2 className="text-white font-extrabold text-sm leading-snug drop-shadow-md line-clamp-2">
                   {item.title}
                 </h2>
-              </div>
 
-              {/* Video Preview / Card Mockup */}
-              <div className={`w-full h-32 rounded-2xl bg-gradient-to-tr ${item.coverGradient || 'from-pink-500 to-rose-600'} text-white p-3.5 flex flex-col justify-between relative overflow-hidden shadow-inner group-hover:scale-[1.01] transition-transform`}>
-                <div className="flex items-center justify-between relative z-10">
-                  <span className="text-2xl">{item.mediaEmoji || '📱'}</span>
-                  <span className="bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold">
-                    {item.duration}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between relative z-10">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
-                      <Play className="w-4 h-4 fill-white ml-0.5" />
-                    </div>
-                    <span className="text-xs font-bold drop-shadow-md">Tap to play preview</span>
-                  </div>
-                  <div className="flex gap-0.5 items-center">
-                    <span className="w-1 h-3 bg-white/80 rounded-full animate-pulse" />
-                    <span className="w-1 h-5 bg-white rounded-full animate-pulse delay-75" />
-                    <span className="w-1 h-2 bg-white/70 rounded-full animate-pulse delay-150" />
-                  </div>
-                </div>
-
-                {/* Subtle Background Pattern */}
-                <div className="absolute inset-0 bg-black/15 pointer-events-none" />
-              </div>
-
-              {/* Key Takeaway Box */}
-              <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 space-y-1">
-                <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">
-                  Key Takeaway
-                </span>
-                <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                {/* Key takeaway */}
+                <p className="text-white/75 text-[11px] leading-relaxed line-clamp-2">
                   {item.keyTakeaway}
                 </p>
+
+                {/* Tag chip */}
+                <span className="inline-block text-[10px] font-extrabold uppercase tracking-wider text-pink-300 bg-pink-500/25 backdrop-blur-sm px-2 py-0.5 rounded-md border border-pink-400/30">
+                  {item.tag}
+                </span>
               </div>
 
-              {/* Actions Footer */}
-              <div className="pt-2 border-t border-slate-50 flex items-center justify-between text-xs text-slate-500 font-medium">
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={(e) => toggleLike(item.id, e)}
-                    className={`flex items-center gap-1 font-bold ${
-                      isLiked ? 'text-pink-600' : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Heart className={`w-3.5 h-3.5 ${isLiked ? 'fill-pink-600 text-pink-600' : ''}`} />
-                    <span>{item.likes}</span>
-                  </button>
+              {/* Right sidebar: action buttons */}
+              <div
+                className="absolute right-3 bottom-10 flex flex-col items-center gap-5"
+                onClick={e => e.stopPropagation()}
+              >
+                {/* Like */}
+                <button
+                  onClick={(e) => toggleLike(item.id, e)}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${isLiked ? 'bg-pink-500' : 'bg-black/40 backdrop-blur-md'}`}>
+                    <Heart className={`w-5 h-5 ${isLiked ? 'fill-white text-white' : 'text-white'}`} />
+                  </div>
+                  <span className="text-white text-[10px] font-bold drop-shadow">{item.likes}</span>
+                </button>
 
-                  {item.commentsCount && (
-                    <span className="flex items-center gap-1">
-                      <MessageCircle className="w-3.5 h-3.5" /> {item.commentsCount}
-                    </span>
-                  )}
-                </div>
+                {/* Comments */}
+                {item.commentsCount && (
+                  <button className="flex flex-col items-center gap-1">
+                    <div className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center">
+                      <MessageCircle className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-white text-[10px] font-bold drop-shadow">{item.commentsCount}</span>
+                  </button>
+                )}
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => toggleBookmark(item.id, e)}
-                    className="p-1 hover:text-slate-800 transition-colors"
-                  >
-                    <Bookmark className={`w-4 h-4 ${isSaved ? 'text-pink-600 fill-pink-600' : ''}`} />
-                  </button>
-                  <button className="p-1 hover:text-slate-800 transition-colors">
-                    <Share2 className="w-4 h-4" />
-                  </button>
-                </div>
+                {/* Bookmark */}
+                <button
+                  onClick={(e) => toggleBookmark(item.id, e)}
+                  className="flex flex-col items-center gap-1"
+                >
+                  <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-all ${isSaved ? 'bg-amber-500' : 'bg-black/40 backdrop-blur-md'}`}>
+                    <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-white text-white' : 'text-white'}`} />
+                  </div>
+                  <span className="text-white text-[10px] font-bold drop-shadow">Save</span>
+                </button>
+
+                {/* Share */}
+                <button className="flex flex-col items-center gap-1">
+                  <div className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center">
+                    <Share2 className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-white text-[10px] font-bold drop-shadow">Share</span>
+                </button>
+              </div>
+
+              {/* Duration badge (top-right corner) */}
+              <div className="absolute top-14 right-3 bg-black/50 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-bold text-white">
+                {item.duration}
               </div>
             </div>
           );
         })}
       </div>
+
+      {/* Scroll position indicator (dots) */}
+      {filteredItems.length > 1 && (
+        <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex flex-col gap-1 z-20 pointer-events-none">
+          {filteredItems.slice(0, 10).map((_, i) => (
+            <div
+              key={i}
+              className={`w-1 rounded-full transition-all duration-300 ${
+                i === currentIndex ? 'h-5 bg-pink-400' : 'h-1.5 bg-white/30'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Swipe hint on first load */}
+      {currentIndex === 0 && filteredItems.length > 1 && (
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 animate-bounce pointer-events-none">
+          <ChevronUp className="w-4 h-4 text-white/60" />
+          <span className="text-white/60 text-[10px] font-bold">Swipe up</span>
+        </div>
+      )}
 
       {/* Interactive Reel / Video Player Modal */}
       {activeMediaModal && (
