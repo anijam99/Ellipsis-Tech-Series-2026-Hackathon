@@ -107,7 +107,7 @@ export const ProfileChatScreen: React.FC<ProfileChatScreenProps> = ({
       confetti({
         particleCount: 90,
         spread: 80,
-        colors: ['#FF6B8B', '#48BB78', '#ECC94B']
+        colors: ['#E4657F', '#6E9670', '#C08A3C']
       });
     }, 1500);
   };

@@ -212,7 +212,7 @@ export const SPENDING_REFLECTION_WEEK = {
 export const LITERACY_FEED_ITEMS: FeedItem[] = [
   {
     id: 'f1',
-    title: 'How Enhanced CPF Housing Grant (EHG) actually computes your grant',
+    title: 'How Enhanced CPF Housing Grant (EHG) computes your grant step-by-step',
     creator: 'The Woke Salaryman',
     handle: '@thewokesalaryman',
     platform: 'tiktok',
@@ -220,8 +220,17 @@ export const LITERACY_FEED_ITEMS: FeedItem[] = [
     duration: '1:12',
     keyTakeaway: 'The lower your household income average over 12 months, the higher the grant (up to $80,000). Applying right after graduation can maximise entitlement.',
     likes: '42.8k',
+    commentsCount: '1.2k',
+    sharesCount: '8.4k',
     isFollowed: true,
-    quote: 'Timing your BTO application before your first major pay raise can unlock an extra $15k to $30k in government grants.'
+    quote: 'Timing your BTO application before your first major pay raise can unlock an extra $15k to $30k in government grants.',
+    coverGradient: 'from-pink-500 to-rose-600',
+    mediaEmoji: '🏘️',
+    verified: true,
+    sampleComments: [
+      { user: 'kai_sg', avatar: '😎', text: 'This saved me and my partner $25k on our Tampines BTO!', likes: '342' },
+      { user: 'cheryl_t', avatar: '🌸', text: 'Does this apply if one partner is still in uni?', likes: '189' },
+    ]
   },
   {
     id: 'f2',
@@ -233,33 +242,100 @@ export const LITERACY_FEED_ITEMS: FeedItem[] = [
     duration: '2:45',
     keyTakeaway: 'S$40/month micro-instalments create mental accounting blind spots, making you 3x more likely to spend above monthly budget.',
     likes: '19.4k',
+    commentsCount: '412',
+    sharesCount: '2.1k',
     isFollowed: true,
-    quote: 'Translate every cart item into your goal currency: is this jacket worth working 3 extra weeks for your keys?'
+    quote: 'Translate every cart item into your goal currency: is this jacket worth working 3 extra weeks for your keys?',
+    coverGradient: 'from-emerald-500 to-teal-700',
+    mediaEmoji: '📊',
+    verified: true,
+    sampleComments: [
+      { user: 'darren_fin', avatar: '💡', text: 'JITAI concept in Ice Kaching is exactly the antidote to this.', likes: '94' }
+    ]
   },
   {
     id: 'f3',
-    title: 'CPF OA vs Cash for BTO Downpayment: The 2.5% maths breakdown',
+    title: 'CPF OA vs Cash for BTO Downpayment: The 2.5% vs 4% maths showdown',
     creator: 'Sethisfy',
     handle: '@sethisfy',
-    platform: 'tiktok',
+    platform: 'youtube',
     tag: 'CPF Hacks',
-    duration: '0:58',
-    keyTakeaway: 'Leaving up to $20,000 in your CPF OA preserves compounding at guaranteed 2.5% - 3.5% p.a. while providing a safety buffer.',
+    duration: '6:18',
+    keyTakeaway: 'Leaving up to $20,000 in your CPF OA preserves compounding at guaranteed 2.5% - 3.5% p.a. while providing an emergency mortgage buffer.',
     likes: '31.1k',
+    commentsCount: '870',
+    sharesCount: '4.5k',
     isFollowed: false,
-    quote: 'Do not wipe out your entire CPF OA down to $0 if you have stable cashflow.'
+    quote: 'Do not wipe out your entire CPF OA down to $0 if you have stable cashflow.',
+    coverGradient: 'from-red-600 to-amber-600',
+    mediaEmoji: '▶️',
+    verified: true,
+    sampleComments: [
+      { user: 'marcus_low', avatar: '📈', text: 'The OA 20k buffer rule saved me during job transition.', likes: '512' }
+    ]
   },
   {
     id: 'f4',
-    title: 'How to claim all your $500 CDC Vouchers before expiry',
+    title: '5 Singaporeans share their actual BTO Renovation cost breakdowns (2026)',
+    creator: 'Hevea Living / Qanvast',
+    handle: '@hevealiving',
+    platform: 'instagram',
+    tag: 'BTO Grants',
+    duration: '1:45',
+    keyTakeaway: 'Average 4-room BTO renovation costs S$42,000 to S$55,000. Carpentry and wet works consume 60% of total outlay.',
+    likes: '28.9k',
+    commentsCount: '630',
+    sharesCount: '11.2k',
+    isFollowed: false,
+    quote: 'Avoid hacking non-structural walls to save up to S$6,000 in contractor fees.',
+    coverGradient: 'from-purple-600 to-pink-600',
+    mediaEmoji: '📸',
+    verified: true,
+    sampleComments: [
+      { user: 'valerie_w', avatar: '🏡', text: 'The Tengah estate group chat was talking about this yesterday!', likes: '204' }
+    ]
+  },
+  {
+    id: 'f5',
+    title: 'r/singaporefi Discussion: "How are 24-year-olds budgeting for Tengah BTO in 2026?"',
+    creator: 'u/singaporean_dreamer',
+    handle: 'r/singaporefi',
+    platform: 'reddit',
+    tag: 'Spending Habits',
+    duration: '4 min read',
+    keyTakeaway: 'Top upvoted strategy: Stacking CPF OA contributions from first job with couple income grants rather than taking commercial personal loans.',
+    likes: '1.8k upvotes',
+    commentsCount: '348 comments',
+    sharesCount: '580',
+    isFollowed: true,
+    quote: 'If you start saving S$1,000/month consistently alongside CPF, 4-room downpayment is 100% achievable in 30 months without touching your emergency buffer.',
+    coverGradient: 'from-orange-500 to-amber-700',
+    mediaEmoji: '💬',
+    verified: false,
+    sampleComments: [
+      { user: 'cpf_enthusiast', avatar: '🤖', text: 'Spot on. EHG + CPF OA handles downpayment completely.', likes: '489' },
+      { user: 'bryan_t', avatar: '🍧', text: 'Currently tracking this exact milestone on Ice Kaching!', likes: '172' }
+    ]
+  },
+  {
+    id: 'f6',
+    title: 'How to claim all your $500 CDC Vouchers before year-end expiry',
     creator: 'GovTech Singapore',
     handle: '@govtechsg',
     platform: 'moneysense',
     tag: 'Gov Grants',
     duration: '1:05',
-    keyTakeaway: 'One representative per household claims via RedeemSG; vouchers split $250 heartland merchants and $250 supermarkets.',
+    keyTakeaway: 'One representative per household claims via RedeemSG; vouchers split $250 heartland merchants and $250 supermarkets with zero paperwork.',
     likes: '58.2k',
+    commentsCount: '920',
+    sharesCount: '34.1k',
     isFollowed: true,
-    quote: 'Zero paperwork, instant SMS activation.'
+    quote: 'Zero paperwork, instant SMS activation and family share link.',
+    coverGradient: 'from-blue-600 to-indigo-700',
+    mediaEmoji: '🇸🇬',
+    verified: true,
+    sampleComments: [
+      { user: 'aunty_may', avatar: '🛒', text: 'Already redeemed at Clementi market this morning!', likes: '310' }
+    ]
   }
 ];

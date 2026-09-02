@@ -15,6 +15,14 @@ import {
   Users,
   Building
 } from 'lucide-react';
+import { playSound } from '../../utils/soundEffects';
+
+const MILESTONE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  'shield-check': ShieldCheck,
+  home: Home,
+  'heart-handshake': Heart,
+  car: Car,
+};
 
 interface JourneyScreenProps {
   milestones: Milestone[];
@@ -45,85 +53,88 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
   const progressPercent = Math.min(100, Math.round((currentSaved / totalTarget) * 100));
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-5 py-4 pb-24 space-y-5">
+    <div className="flex flex-col h-full overflow-y-auto [&>*]:shrink-0 px-5 py-4 pb-24 space-y-5">
       {/* Header */}
       <div className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Your journey</h1>
         <p className="text-sm text-slate-500 font-medium">Four milestones, one route</p>
       </div>
 
-      {/* Interactive Visual Roadmap (1:1 with Screen 2) */}
-      <div className="relative bg-white rounded-3xl p-6 border border-slate-100 shadow-sm overflow-hidden">
-        {/* Subtle decorative roadmap track */}
-        <div className="absolute top-12 bottom-12 left-1/2 -translate-x-1/2 w-1.5 bg-slate-100 rounded-full" />
-        
-        {/* Curved connecting line */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none stroke-pink-200" fill="none">
-          <path
-            d="M 170 60 C 230 110, 110 160, 170 210 C 230 260, 110 310, 170 360"
-            strokeWidth="3"
-            strokeDasharray="6 6"
-          />
-        </svg>
+      {/*
+        The route, read the way you walk it: earliest at the top, the flat you are saving
+        for actually ON the path rather than represented by a floating pin, and the line
+        behind you solid while the road ahead stays dashed.
 
-        <div className="relative flex flex-col items-center space-y-8 z-10">
-          {/* Milestone 4: Car (2034) */}
-          <div 
-            onClick={() => setSelectedMilestone(milestones[3])}
-            className="flex items-center gap-4 w-full max-w-[280px] bg-slate-50/80 hover:bg-slate-100 p-3 rounded-2xl border border-slate-200/60 cursor-pointer transition-all hover:scale-[1.02]"
-          >
-            <div className="w-10 h-10 rounded-xl bg-slate-200 text-slate-600 flex items-center justify-center font-bold">
-              <Car className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-800">Car</h3>
-              <p className="text-xs text-slate-500 font-medium">S$25,000 · 2034</p>
-            </div>
-          </div>
+        Each row owns the connector above it, so the spine self-aligns at any card height
+        instead of relying on hardcoded SVG coordinates.
+      */}
+      <div className="relative shrink-0 bg-white rounded-3xl p-5 border border-slate-100 shadow-sm">
+        <ol className="relative">
+          {milestones.map((m, i) => {
+            const Icon = MILESTONE_ICONS[m.icon] ?? Home;
+            const isLast = i === milestones.length - 1;
+            const done = m.status === 'done';
+            const current = m.status === 'in_progress';
+            const walked = done || current;
 
-          {/* Milestone 3: Wedding (2031) */}
-          <div 
-            onClick={() => setSelectedMilestone(milestones[2])}
-            className="flex items-center gap-4 w-full max-w-[280px] bg-slate-50/80 hover:bg-slate-100 p-3 rounded-2xl border border-slate-200/60 cursor-pointer transition-all hover:scale-[1.02]"
-          >
-            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
-              <Heart className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-800">Wedding</h3>
-              <p className="text-xs text-slate-500 font-medium">S$32,000 · 2031</p>
-            </div>
-          </div>
+            return (
+              <li key={m.id} className="relative flex gap-3.5 pb-5 last:pb-0">
+                {!isLast && (
+                  <span
+                    aria-hidden="true"
+                    className={`absolute left-[1.375rem] top-11 h-[calc(100%-2.75rem)] -translate-x-1/2 rounded-full ${
+                      walked ? 'w-0.5 bg-kachang-pink/60' : 'w-0 border-l-2 border-dashed border-slate-300'
+                    }`}
+                  />
+                )}
 
-          {/* "YOU" Locator Indicator (Pulsing Pin on Path) */}
-          <div className="flex items-center justify-center">
-            <div className="relative flex flex-col items-center">
-              <span className="text-[10px] font-extrabold text-pink-600 uppercase tracking-widest bg-pink-100 px-2 py-0.5 rounded-full mb-1 border border-pink-200 shadow-sm">
-                You
-              </span>
-              <div className="w-10 h-10 rounded-full bg-pink-500 text-white flex items-center justify-center shadow-lg shadow-pink-300 ring-4 ring-pink-100 animate-pulse">
-                <Home className="w-5 h-5" />
-              </div>
-            </div>
-          </div>
+                <div
+                  className={`relative z-10 grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${
+                    done
+                      ? 'bg-kachang-yellow text-white shadow-sm'
+                      : current
+                        ? 'bg-kachang-pink text-white shadow-md shadow-pink-200 ring-4 ring-pink-100'
+                        : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  {done ? <Check className="h-5 w-5 stroke-[3]" /> : <Icon className="h-5 w-5" />}
+                </div>
 
-          {/* Milestone 1: Emergency Buffer (DONE) */}
-          <div 
-            onClick={() => setSelectedMilestone(milestones[0])}
-            className="flex items-center gap-4 w-full max-w-[280px] bg-amber-50/70 hover:bg-amber-100/70 p-3 rounded-2xl border border-amber-200/70 cursor-pointer transition-all hover:scale-[1.02]"
-          >
-            <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-sm">
-              <Check className="w-5 h-5 stroke-[3]" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h3 className="text-sm font-bold text-slate-900">Emergency buffer</h3>
-                <span className="text-[10px] font-bold text-amber-700 bg-amber-200/80 px-1.5 py-0.2 rounded">Done</span>
-              </div>
-              <p className="text-xs text-slate-500 font-medium">S$9,600 saved · done</p>
-            </div>
-          </div>
-        </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    playSound.pop();
+                    setSelectedMilestone(m);
+                  }}
+                  className={`flex-1 rounded-2xl border p-3 text-left transition-colors ${
+                    current
+                      ? 'border-pink-200 bg-pink-50/60 hover:bg-pink-50'
+                      : done
+                        ? 'border-amber-200/70 bg-amber-50/50 hover:bg-amber-50'
+                        : 'border-slate-200/70 bg-slate-50/60 hover:bg-slate-100/70'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">{m.title}</h3>
+                    {current && (
+                      <span className="rounded-full bg-kachang-pink px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                        You are here
+                      </span>
+                    )}
+                    {done && (
+                      <span className="rounded bg-amber-200/80 px-1.5 text-[10px] font-bold text-amber-800">
+                        Done
+                      </span>
+                    )}
+                  </div>
+                  <p className="tnum mt-0.5 text-xs font-medium text-slate-500">
+                    S${m.targetCost.toLocaleString()} · {m.targetYear}
+                  </p>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
       </div>
 
       {/* Active Milestone Card (BTO Flat Tengah - Exact 1:1 Match with PDF Screen 2) */}
@@ -186,7 +197,10 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
 
         {/* Milestone Configuration Trigger */}
         <button
-          onClick={() => setSelectedMilestone(milestones[1])}
+          onClick={() => {
+            playSound.pop();
+            setSelectedMilestone(milestones[1]);
+          }}
           className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-colors"
         >
           <Sliders className="w-3.5 h-3.5" /> Customize Flat Type & Couples Split
@@ -225,7 +239,10 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
                   {(['3-room', '4-room', '5-room'] as const).map((type) => (
                     <button
                       key={type}
-                      onClick={() => setFlatType(type)}
+                      onClick={() => {
+                        playSound.pop();
+                        setFlatType(type);
+                      }}
                       className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
                         flatType === type
                           ? 'bg-pink-500 text-white border-pink-500 shadow-sm'
@@ -249,7 +266,10 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
                   <input
                     type="checkbox"
                     checked={includePartner}
-                    onChange={(e) => setIncludePartner(e.target.checked)}
+                    onChange={(e) => {
+                      playSound.pop();
+                      setIncludePartner(e.target.checked);
+                    }}
                     className="w-4 h-4 accent-pink-600 rounded cursor-pointer"
                   />
                 </div>
@@ -278,7 +298,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
 
             <button
               onClick={() => setSelectedMilestone(null)}
-              className="w-full py-3 bg-[#FF6B8B] hover:bg-[#fa5578] text-white font-bold text-sm rounded-xl transition-colors shadow-md"
+              className="w-full py-3 bg-pink-500 hover:bg-pink-700 text-white font-bold text-sm rounded-xl transition-colors shadow-md"
             >
               Save Milestone Settings
             </button>

@@ -31,16 +31,17 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all duration-200 relative ${
+              aria-current={isActive ? 'page' : undefined}
+              className={`flex min-w-[3.25rem] flex-col items-center justify-center py-1.5 px-3 rounded-2xl transition-colors duration-200 relative ${
                 isActive
-                  ? 'text-pink-600 scale-105'
+                  ? 'text-pink-600'
                   : 'text-slate-400 hover:text-slate-600'
               }`}
             >
               <div className="relative">
                 <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
                 {tab.badge && (
-                  <span className="absolute -top-1.5 -right-2 bg-pink-500 text-white text-[9px] font-extrabold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                  <span className="absolute -top-2 -right-2.5 bg-pink-500 text-white text-[9px] font-extrabold min-w-[1.125rem] h-[1.125rem] px-1 rounded-full flex items-center justify-center ring-2 ring-white tnum">
                     {tab.badge}
                   </span>
                 )}
@@ -49,7 +50,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 {tab.label}
               </span>
               {isActive && (
-                <span className="w-1 h-1 rounded-full bg-pink-500 absolute bottom-0.5" />
+                <span className="absolute -top-0.5 h-1 w-6 rounded-full bg-pink-500" />
               )}
             </button>
           );

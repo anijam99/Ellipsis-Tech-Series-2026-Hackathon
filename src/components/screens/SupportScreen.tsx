@@ -15,6 +15,14 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
+const CATEGORY_TINT: Record<string, string> = {
+  training:        'bg-purple-50/50 border-purple-100/60',
+  cost_of_living:  'bg-amber-50/60 border-amber-100/70',
+  housing:         'bg-pink-50/50 border-pink-100/70',
+  sustainability:  'bg-emerald-50/50 border-emerald-100/70',
+  retirement:      'bg-orange-50/50 border-orange-100/60',
+};
+
 interface SupportScreenProps {
   schemes: GovernmentScheme[];
   onClaimScheme: (id: string) => void;
@@ -44,12 +52,12 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
       particleCount: 80,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#ECC94B', '#FF6B8B', '#48BB78']
+      colors: ['#C08A3C', '#E4657F', '#6E9670']
     });
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-5 py-4 pb-24 space-y-4">
+    <div className="flex flex-col h-full overflow-y-auto [&>*]:shrink-0 px-5 py-4 pb-24 space-y-4">
       {/* Header (Exact 1:1 Match with PDF Screen 3) */}
       <div className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
@@ -115,10 +123,10 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
           <div
             key={scheme.id}
             onClick={() => setSelectedScheme(scheme)}
-            className={`bg-white rounded-2xl p-4 border transition-all cursor-pointer hover:shadow-md ${
+            className={`rounded-2xl p-4 border transition-all cursor-pointer hover:shadow-soft ${
               scheme.claimed
-                ? 'border-emerald-200/80 bg-emerald-50/20'
-                : 'border-slate-100 hover:border-pink-200'
+                ? 'border-emerald-200/70 bg-emerald-50/50'
+                : `${CATEGORY_TINT[scheme.category] ?? 'bg-white border-slate-100'} hover:border-pink-200`
             }`}
           >
             {/* Top Row: Title & Amount */}
@@ -131,13 +139,28 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
                   {scheme.officialAgency}
                 </p>
               </div>
+              {/*
+                Size the amount by what it is worth. Every grant was set at one size, so a
+                S$30,000 housing grant and a S$500 voucher carried identical visual weight
+                and the list had no shape. Claimed ones step back: their work is done.
+              */}
               <div className="text-right shrink-0">
-                <span className="text-base font-extrabold text-amber-600">
+                <span
+                  className={`tnum block font-extrabold leading-none tracking-tight ${
+                    scheme.claimed
+                      ? 'text-base text-slate-400'
+                      : scheme.amount >= 10000
+                        ? 'text-[26px] text-amber-600'
+                        : scheme.amount >= 1000
+                          ? 'text-xl text-amber-600'
+                          : 'text-base text-amber-600'
+                  }`}
+                >
                   {scheme.amountDisplay}
                 </span>
                 {scheme.claimed && (
-                  <span className="block text-[10px] font-bold text-emerald-600">
-                    Claimed ✓
+                  <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600">
+                    <Check className="h-3 w-3 stroke-[3]" /> Claimed
                   </span>
                 )}
               </div>
@@ -235,7 +258,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
               {!selectedScheme.claimed ? (
                 <button
                   onClick={() => handleClaim(selectedScheme)}
-                  className="w-full py-3 bg-[#FF6B8B] hover:bg-[#fa5578] text-white font-bold text-sm rounded-xl transition-colors shadow-md flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-pink-500 hover:bg-pink-700 text-white font-bold text-sm rounded-xl transition-colors shadow-md flex items-center justify-center gap-2"
                 >
                   <CheckCircle2 className="w-4 h-4" /> Simulate Claim with Singpass
                 </button>

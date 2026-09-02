@@ -1,5 +1,16 @@
 export type CompanionState = 'healthy' | 'slipping' | 'melting' | 'melted';
 
+export type AppViewMode = 'os-home' | 'ice-kaching' | 'shopping';
+
+export type SocialPlatform = 'tiktok' | 'instagram' | 'youtube' | 'reddit' | 'moneysense';
+
+export interface FeedComment {
+  user: string;
+  avatar: string;
+  text: string;
+  likes: string;
+}
+
 export interface Milestone {
   id: string;
   title: string;
@@ -61,11 +72,45 @@ export interface FeedItem {
   title: string;
   creator: string;
   handle: string;
-  platform: 'tiktok' | 'instagram' | 'moneysense';
+  platform: SocialPlatform;
   tag: string;
   duration: string;
   keyTakeaway: string;
   likes: string;
+  commentsCount?: string;
+  sharesCount?: string;
   isFollowed: boolean;
   quote: string;
+  coverGradient?: string;
+  mediaEmoji?: string;
+  verified?: boolean;
+  sampleComments?: FeedComment[];
+}
+
+export interface ShopProduct {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice?: number;
+  rating: number;
+  soldCount: string;
+  category: 'electronics' | 'fashion' | 'lifestyle' | 'gaming';
+  image: string;
+  emoji: string;
+  tag?: string;
+  description: string;
+  btoDelayDays: number;
+}
+
+export interface PushNotification {
+  id: string;
+  appName: string;
+  title: string;
+  message: string;
+  timeAgo: string;
+  actionData?: {
+    itemName: string;
+    itemPrice: number;
+    daysDelayed: number;
+  };
 }
