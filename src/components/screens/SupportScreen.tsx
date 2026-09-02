@@ -8,12 +8,18 @@ import {
   Clock, 
   FileText, 
   ArrowRight,
-  Filter,
   Check,
-  Building,
-  Info
+  MessageCircle,
+  Send,
+  X,
+  LoaderCircle,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 const CATEGORY_TINT: Record<string, string> = {
   training:        'bg-purple-50/50 border-purple-100/60',
@@ -38,6 +44,15 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
 }) => {
   const [selectedScheme, setSelectedScheme] = useState<GovernmentScheme | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [showChat, setShowChat] = useState(false);
+  const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: 'assistant',
+      content: 'Hi, I\'m Ice Kaching. Ask me anything about budgeting, saving, CPF, or the support schemes you may be eligible for.',
+    },
+  ]);
 
   const filteredSchemes = filterCategory === 'all' 
     ? schemes 
@@ -93,6 +108,143 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
           </button>
         )}
       </div>
+
+      {/* Financial Coach */}
+      <button
+        onClick={() => setShowChat(true)}
+        className="w-full rounded-2xl border border-slate-200 bg-slate-900 p-4 text-left text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+      >
+        <span className="flex items-center justify-between">
+          <span className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-pink-500">
+              <MessageCircle className="h-5 w-5" />
+            </span>
+            <span>
+              <span className="block text-sm font-bold">Talk to Ice Kaching</span>
+              <span className="block text-[11px] text-slate-300">Your personal financial coach</span>
+            </span>
+          </span>
+          <ArrowRight className="h-4 w-4 text-pink-300" />
+        </span>
+      </button>
+
+      {/* Chat Modal */}
+      {showChat && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
+          <div className="flex h-[min(680px,85vh)] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="flex items-center justify-between bg-slate-900 px-5 py-4 text-white">
+              <div>
+                <h3 className="text-base font-bold">Ice Kaching Coach</h3>
+                <p className="text-[11px] text-slate-300">Practical money guidance, whenever you need it</p>
+              </div>
+              <button aria-label="Close financial coach" onClick={() => setShowChat(false)} className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 space-y-3 overflow-y-auto bg-slate-50 p-4" aria-live="polite">
+              {messages.map((message, index) => (
+                <div key={`${message.role}-${index}`} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${message.role === 'user' ? 'rounded-br-md bg-pink-500 text-white' : 'rounded-bl-md border border-slate-200 bg-white text-slate-700'}`}>
+                    {message.content}
+                  </div>
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> Ice Kaching is thinking...
+                </div>
+              )}
+            </div>
+            <form
+              onSubmit={async event => {
+                event.preventDefault();
+                const content = input.trim();
+                if (!content || isLoading) return;
+
+                const userMessage: ChatMessage = { role: 'user', content };
+                const conversation = [...messages, userMessage];
+                setMessages(conversation);
+                setInput('');
+                setIsLoading(true);
+
+                try {
+                  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                      Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+                      'Content-Type': 'application/json',
+                      'HTTP-Referer': window.location.origin,
+                      'X-Title': 'Ice Kaching',
+                    },
+                    body: JSON.stringify({
+                      model: 'inclusionai/ling-3.0-flash-fin:free',
+                      messages: [
+                        {
+                          role: 'system',
+                          content: 'You are Ice Kaching, a warm and practical Singapore financial coach. Give clear, actionable guidance about budgeting, saving, CPF, and government support. Do not claim to be a licensed financial adviser, and encourage users to verify time-sensitive details with official sources.',
+                        },
+                        ...conversation,
+                      ],
+                      stream: true,
+                    }),
+                  });
+
+                  if (!response.ok || !response.body) {
+                    throw new Error(`OpenRouter request failed: ${response.status}`);
+                  }
+
+                  setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
+                  const reader = response.body.getReader();
+                  const decoder = new TextDecoder();
+                  let buffer = '';
+
+                  while (true) {
+                    const { value, done } = await reader.read();
+                    buffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+                    const events = buffer.split('\n\n');
+                    buffer = events.pop() ?? '';
+
+                    for (const event of events) {
+                      const data = event.split('\n').find(line => line.startsWith('data: '))?.slice(6);
+                      if (!data || data === '[DONE]') continue;
+                      const token = JSON.parse(data).choices?.[0]?.delta?.content;
+                      if (token) {
+                        setMessages(prev => {
+                          const last = prev[prev.length - 1];
+                          return last?.role === 'assistant'
+                            ? [...prev.slice(0, -1), { ...last, content: last.content + token }]
+                            : prev;
+                        });
+                      }
+                    }
+
+                    if (done) break;
+                  }
+                } catch (error) {
+                  console.error('Financial coach error:', error);
+                  setMessages(prev => [...prev, { role: 'assistant', content: 'I could not connect right now. Please try again in a moment.' }]);
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              className="flex gap-2 border-t border-slate-100 bg-white p-4"
+            >
+              <input
+                type="text"
+                value={input}
+                onChange={event => setInput(event.target.value)}
+                className="min-w-0 flex-1 rounded-xl border border-slate-200 px-3 py-2.5 text-xs text-slate-800 outline-none transition-colors placeholder:text-slate-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100"
+                placeholder="Ask about your money..."
+                aria-label="Message Ice Kaching"
+                disabled={isLoading}
+              />
+              <button type="submit" aria-label="Send message" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pink-500 text-white transition-colors hover:bg-pink-600 disabled:cursor-not-allowed disabled:opacity-50" disabled={isLoading || !input.trim()}>
+                <Send className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Category Pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none text-xs">
