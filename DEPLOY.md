@@ -1,8 +1,16 @@
 # Deploying Ice Kaching
 
-The app is a static site — no backend, no database, no API keys, no environment
-variables. `npm run build` produces a `dist/` folder of plain files, and any static host
-will serve it. That makes this genuinely easy; most of the steps below are account setup.
+The app is a static site — no backend, no database. `npm run build` produces a `dist/`
+folder of plain files, and any static host will serve it. That makes this genuinely easy;
+most of the steps below are account setup.
+
+One exception: the "Talk to Ice Kaching" chat calls the OpenRouter API directly from the
+browser, using a `VITE_OPENROUTER_API_KEY` baked in at build time (see the README's Setup
+section). Every other screen works fine without it — set it before building only if you
+want that one chat to give real answers instead of its "could not connect" fallback. Note
+that Vite inlines `VITE_`-prefixed variables into the shipped JS bundle, so whatever key
+you build with is visible to anyone who opens dev tools on the deployed site. Fine for a
+free-tier hackathon key; not a place to put a production secret.
 
 **Recommended host: Cloudflare Pages.** Free, unlimited bandwidth, and no commercial-use
 restriction. The alternatives are fine too — see *Other hosts* at the bottom for the
@@ -16,7 +24,6 @@ Use this today so the team can look at it. Drag-and-drop, nothing to configure.
 
 1. **Build it.**
    ```bash
-   cd ice-kaching-gemini
    npm install
    npm run build
    ```
@@ -45,44 +52,35 @@ mobile app in a phone frame.
 
 Once this is set up, `git push` publishes. No more manual uploads.
 
-### 1. Get the code into the repo
-
-The working copy currently sits outside the Git clone, so move it in first.
+### 1. Get the code
 
 ```bash
-# somewhere sensible, e.g. your Desktop
-git clone https://github.com/Slyf0xXX/ts-hackathon-2026.git
-cd ts-hackathon-2026
-git checkout -b ice-kaching-ui
-
-# copy the app in, replacing the old version
-rm -rf ice-kaching-gemini
-cp -r "/c/Users/aloy/Builds n Apps/ice-kaching-gemini" ./ice-kaching-gemini
-
-git add ice-kaching-gemini
-git commit -m "Ice Kaching: UI/UX pass and warm palette"
-git push -u origin ice-kaching-ui
+git clone https://github.com/Slyf0xXX/soju-ice-kaching.git
+cd soju-ice-kaching
 ```
 
-`node_modules/` and `dist/` are ignored by `.gitignore`, so only source gets committed.
+The app lives at the repo root now — there's no subfolder to `cd` into.
 
 ### 2. Connect Cloudflare Pages to the repo
 
 1. **Workers & Pages → Create → Pages → Connect to Git**, and authorise GitHub. When it
-   asks which repositories, you can grant access to just `ts-hackathon-2026`.
+   asks which repositories, you can grant access to just `soju-ice-kaching`.
 
-2. Pick the repo, then set **exactly** these — the root directory is the part people miss,
-   because the app lives in a subfolder:
+2. Pick the repo, then set **exactly** these:
 
    | Setting | Value |
    |---|---|
-   | Production branch | `ice-kaching-ui` |
+   | Production branch | `main` |
    | Framework preset | `Vite` |
    | Build command | `npm run build` |
    | Build output directory | `dist` |
-   | **Root directory** | **`ice-kaching-gemini`** |
+   | Root directory | `/` (default) |
 
-3. **Save and Deploy.** First build takes a couple of minutes; later ones are quicker.
+3. **Add the environment variable** (optional — skip if you don't need the live chat): under
+   **Settings → Environment variables**, add `VITE_OPENROUTER_API_KEY` with your OpenRouter
+   key, for both Production and Preview.
+
+4. **Save and Deploy.** First build takes a couple of minutes; later ones are quicker.
 
 Every push to that branch now redeploys. Pull requests get their own preview URL, so you
 can review a change on a real phone before it reaches the main link.
@@ -128,7 +126,7 @@ All three are free and all three will work. The differences only matter at the e
   consultant. For a hackathon with prize money that's a question worth not having.
 - **GitHub Pages** — free and fine, but a project site is served from
   `username.github.io/repo-name/`, and this build uses absolute asset paths (`/assets/…`).
-  You would need to set `base: '/ts-hackathon-2026/'` in `vite.config.ts` and rebuild, or
+  You would need to set `base: '/soju-ice-kaching/'` in `vite.config.ts` and rebuild, or
   every stylesheet and script 404s. Only worth it if you specifically want Pages.
 
 ---

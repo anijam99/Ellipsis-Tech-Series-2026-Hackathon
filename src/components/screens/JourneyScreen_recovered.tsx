@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Milestone } from '../../types';
 import { 
-  Plus,
   Check, 
   Car, 
   Heart, 
@@ -15,7 +14,8 @@ import {
   TrendingUp,
   Sparkles,
   Users,
-  Building
+  Building,
+  Plus
 } from 'lucide-react';
 import { playSound } from '../../utils/soundEffects';
 import { CompanionAvatar } from '../CompanionAvatar';
@@ -61,7 +61,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
   const progressPercent = Math.min(100, Math.round((currentSaved / totalTarget) * 100));
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden [&>*]:shrink-0 px-5 py-4 pb-24 space-y-5">
+    <div className="flex flex-col h-full overflow-y-auto [&>*]:shrink-0 px-5 py-4 pb-24 space-y-5">
       {/* Header */}
       <div className="mb-2">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900">Your journey</h1>
@@ -76,7 +76,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
         />
 
         {/* Scrollable Map Area */}
-        <div className="relative w-full h-full flex flex-col py-4 overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div className="relative w-full h-full flex flex-col py-4 overflow-y-auto [&::-webkit-scrollbar]:hidden">
           {localMilestones.map((m, i) => {
             const Icon = MILESTONE_ICONS[m.icon] ?? Home;
             const isLast = i === localMilestones.length - 1;
@@ -85,7 +85,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
             const isLeft = i % 2 === 0;
 
             return (
-              <div key={m.id} className="relative w-full h-[85px] flex items-center justify-center shrink-0 animate-fade-in transition-all duration-500 ease-in-out transform">
+              <div key={m.id} className="relative w-full h-[85px] flex items-center justify-center shrink-0 animate-fade-in">
                 {/* Winding Track Connector */}
                 {!isLast ? (
                   <div 
@@ -116,7 +116,7 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
                           </div>
                         </div>
                       ) : (
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-md ${done ? 'bg-emerald-500 text-white border-none' : 'bg-white text-slate-400'}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-4 border-white shadow-md ${done ? 'bg-pink-400 text-white' : 'bg-white text-slate-400'}`}>
                           {done ? <Check className="w-5 h-5 stroke-[3]" /> : <Icon className="w-5 h-5" />}
                         </div>
                       )}
@@ -280,10 +280,26 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
         </button>
       </div>
 
+      {/* Milestone Action Buttons */}
+      <div className="flex gap-3">
+        <button 
+          onClick={() => playSound.pop()}
+          className="flex-1 py-3 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-2xl shadow-sm transition-colors active:scale-95"
+        >
+          Edit milestone
+        </button>
+        <button 
+          onClick={() => playSound.pop()}
+          className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-2xl shadow-sm transition-colors active:scale-95"
+        >
+          Add custom milestone
+        </button>
+      </div>
+
       {/* Milestone Details & Configuration Modal */}
       {selectedMilestone && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center">
@@ -374,100 +390,6 @@ export const JourneyScreen: React.FC<JourneyScreenProps> = ({
               className="w-full py-3 bg-pink-500 hover:bg-pink-700 text-white font-bold text-sm rounded-xl transition-colors shadow-md"
             >
               Save Milestone Settings
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Add Custom Milestone Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-[60] bg-slate-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-slate-900 text-lg">Add Custom Milestone</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 font-bold p-1 text-xl leading-none">&times;</button>
-            </div>
-            
-            <div className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Milestone Name</label>
-                <input 
-                  type="text" 
-                  value={newMilestoneName}
-                  onChange={e => setNewMilestoneName(e.target.value)}
-                  placeholder="e.g. Dream Wedding"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500 focus:ring-1 focus:ring-pink-500"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Target Year</label>
-                  <input 
-                    type="number" 
-                    value={newMilestoneYear}
-                    onChange={e => setNewMilestoneYear(e.target.value)}
-                    placeholder="2027"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Target Amount (S$)</label>
-                  <input 
-                    type="number" 
-                    value={newMilestoneCost}
-                    onChange={e => setNewMilestoneCost(e.target.value)}
-                    placeholder="30000"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-pink-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => {
-                const newM: Milestone = {
-                  id: `custom-${Date.now()}`,
-                  title: newMilestoneName || 'New Goal',
-                  targetYear: newMilestoneYear || '2028',
-                  status: 'upcoming',
-                  icon: 'heart-handshake',
-                  targetCost: parseInt(newMilestoneCost) || 0,
-                  savedAmount: 0,
-                  color: 'bg-emerald-50 text-emerald-500',
-                  category: 'housing'
-                };
-                
-                setLocalMilestones(prev => {
-                  let arr = [...prev, newM].sort((a, b) => {
-                    const ya = parseInt(a.targetYear.replace(/\D/g, '')) || 0;
-                    const yb = parseInt(b.targetYear.replace(/\D/g, '')) || 0;
-                    return ya - yb;
-                  });
-                  
-                  let foundInProgress = false;
-                  arr = arr.map(m => {
-                    const y = parseInt(m.targetYear.replace(/\D/g, '')) || 0;
-                    if (y <= 2026) {
-                      return { ...m, status: 'done' };
-                    } else if (!foundInProgress) {
-                      foundInProgress = true;
-                      return { ...m, status: 'in_progress' };
-                    } else {
-                      return { ...m, status: 'upcoming' };
-                    }
-                  });
-                  
-                  return arr;
-                });
-                
-                setShowAddModal(false);
-                setNewMilestoneName('');
-                setNewMilestoneCost('');
-              }}
-              className="w-full py-3 bg-pink-500 hover:bg-pink-600 text-white font-bold text-sm rounded-xl transition-colors shadow-md mt-2"
-            >
-              Add Milestone
             </button>
           </div>
         </div>

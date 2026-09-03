@@ -225,7 +225,7 @@ export const LITERACY_FEED_ITEMS: FeedItem[] = [
     isFollowed: true,
     quote: 'Timing your BTO application before your first major pay raise can unlock an extra $15k to $30k in government grants.',
     coverGradient: 'from-pink-500 to-rose-600',
-    mediaEmoji: '🏘️',
+    imageUrl: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&q=80',
     verified: true,
     sampleComments: [
       { user: 'kai_sg', avatar: '😎', text: 'This saved me and my partner $25k on our Tampines BTO!', likes: '342' },
@@ -247,7 +247,7 @@ export const LITERACY_FEED_ITEMS: FeedItem[] = [
     isFollowed: true,
     quote: 'Translate every cart item into your goal currency: is this jacket worth working 3 extra weeks for your keys?',
     coverGradient: 'from-emerald-500 to-teal-700',
-    mediaEmoji: '📊',
+    imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80',
     verified: true,
     sampleComments: [
       { user: 'darren_fin', avatar: '💡', text: 'JITAI concept in Ice Kaching is exactly the antidote to this.', likes: '94' }
@@ -268,7 +268,7 @@ export const LITERACY_FEED_ITEMS: FeedItem[] = [
     isFollowed: false,
     quote: 'Do not wipe out your entire CPF OA down to $0 if you have stable cashflow.',
     coverGradient: 'from-red-600 to-amber-600',
-    mediaEmoji: '▶️',
+    imageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80',
     verified: true,
     sampleComments: [
       { user: 'marcus_low', avatar: '📈', text: 'The OA 20k buffer rule saved me during job transition.', likes: '512' }
@@ -289,7 +289,7 @@ export const LITERACY_FEED_ITEMS: FeedItem[] = [
     isFollowed: false,
     quote: 'Avoid hacking non-structural walls to save up to S$6,000 in contractor fees.',
     coverGradient: 'from-purple-600 to-pink-600',
-    mediaEmoji: '📸',
+    imageUrl: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80',
     verified: true,
     sampleComments: [
       { user: 'valerie_w', avatar: '🏡', text: 'The Tengah estate group chat was talking about this yesterday!', likes: '204' }
@@ -310,7 +310,7 @@ export const LITERACY_FEED_ITEMS: FeedItem[] = [
     isFollowed: true,
     quote: 'If you start saving S$1,000/month consistently alongside CPF, 4-room downpayment is 100% achievable in 30 months without touching your emergency buffer.',
     coverGradient: 'from-orange-500 to-amber-700',
-    mediaEmoji: '💬',
+    imageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80',
     verified: false,
     sampleComments: [
       { user: 'cpf_enthusiast', avatar: '🤖', text: 'Spot on. EHG + CPF OA handles downpayment completely.', likes: '489' },
@@ -332,7 +332,7 @@ export const LITERACY_FEED_ITEMS: FeedItem[] = [
     isFollowed: true,
     quote: 'Zero paperwork, instant SMS activation and family share link.',
     coverGradient: 'from-blue-600 to-indigo-700',
-    mediaEmoji: '🇸🇬',
+    imageUrl: 'https://images.unsplash.com/photo-1607082349566-187342175e2f?w=800&q=80',
     verified: true,
     sampleComments: [
       { user: 'aunty_may', avatar: '🛒', text: 'Already redeemed at Clementi market this morning!', likes: '310' }

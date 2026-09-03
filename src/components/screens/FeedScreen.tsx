@@ -196,20 +196,24 @@ export const FeedScreen: React.FC<FeedScreenProps> = ({
                 setActiveMediaModal(item);
               }}
             >
-              {/* Full-bleed gradient background */}
-              <div
-                className={`absolute inset-0 bg-gradient-to-b ${item.coverGradient || 'from-pink-500 to-rose-900'}`}
-              />
+              {/* Full-bleed background */}
+              {item.imageUrl ? (
+                <img src={item.imageUrl} alt={item.title} className="absolute inset-0 w-full h-full object-cover" />
+              ) : (
+                <div
+                  className={`absolute inset-0 bg-gradient-to-b ${item.coverGradient || 'from-pink-500 to-rose-900'}`}
+                />
+              )}
               {/* Dark vignette for text readability */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
 
               {/* Center content: emoji + play */}
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 pointer-events-none">
-                <span className="text-7xl drop-shadow-xl">{item.mediaEmoji || '📱'}</span>
-                <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                {!item.imageUrl && <span className="text-7xl drop-shadow-xl">{item.mediaEmoji || '🎥'}</span>}
+                <div className="w-14 h-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center shadow-lg border border-white/20">
                   <Play className="w-7 h-7 fill-white text-white ml-1" />
                 </div>
-                <span className="text-white/80 text-xs font-semibold drop-shadow">Tap to play</span>
+                <span className="text-white/90 text-xs font-semibold drop-shadow-md">Tap to play</span>
               </div>
 
               {/* Bottom-left: creator info + title */}
@@ -364,7 +368,15 @@ export const FeedScreen: React.FC<FeedScreenProps> = ({
             </div>
 
             {/* Video Player Canvas */}
-            <div className={`relative h-64 bg-gradient-to-tr ${activeMediaModal.coverGradient || 'from-pink-600 to-amber-600'} flex flex-col justify-between p-4 overflow-hidden`}>
+            <div className="relative h-64 flex flex-col justify-between p-4 overflow-hidden bg-slate-900">
+              {activeMediaModal.imageUrl ? (
+                <img src={activeMediaModal.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-60" />
+              ) : (
+                <div className={`absolute inset-0 bg-gradient-to-tr ${activeMediaModal.coverGradient || 'from-pink-600 to-amber-600'}`} />
+              )}
+              {/* Vignette */}
+              <div className="absolute inset-0 bg-black/40" />
+              
               {/* Sound / HD Pill */}
               <div className="flex items-center justify-between relative z-10">
                 <span className="bg-black/50 backdrop-blur-md px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">

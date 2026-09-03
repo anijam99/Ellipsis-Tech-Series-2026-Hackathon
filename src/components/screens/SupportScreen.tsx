@@ -15,6 +15,7 @@ import {
   LoaderCircle,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { CompanionAvatar } from '../CompanionAvatar';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -110,23 +111,28 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
       </div>
 
       {/* Financial Coach */}
-      <button
-        onClick={() => setShowChat(true)}
-        className="w-full rounded-2xl border border-slate-200 bg-slate-900 p-4 text-left text-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
-      >
-        <span className="flex items-center justify-between">
-          <span className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-pink-500">
-              <MessageCircle className="h-5 w-5" />
-            </span>
-            <span>
-              <span className="block text-sm font-bold">Talk to Ice Kaching</span>
-              <span className="block text-[11px] text-slate-300">Your personal financial coach</span>
-            </span>
-          </span>
-          <ArrowRight className="h-4 w-4 text-pink-300" />
-        </span>
-      </button>
+        <button
+          onClick={() => setShowChat(true)}
+          className="relative w-full overflow-hidden rounded-3xl bg-gradient-to-r from-pink-500 to-pink-400 p-5 text-left text-white shadow-lg shadow-pink-200/50 transition-all hover:scale-[1.02] active:scale-95"
+        >
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30 overflow-hidden shadow-inner">
+                <CompanionAvatar state="healthy" size="sm" className="w-10 h-10 scale-[1.3] translate-y-1" />
+              </div>
+              <div>
+                <span className="block text-sm font-extrabold tracking-wide drop-shadow-sm">Ask Ice Kaching!</span>
+                <span className="block text-[11px] font-medium text-pink-50">Tap to chat with your smart financial coach</span>
+              </div>
+            </div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-pink-500 shadow-sm animate-pulse">
+              <MessageCircle className="h-4 w-4" />
+            </div>
+          </div>
+          {/* Decorative shapes */}
+          <div className="absolute -right-4 -top-6 h-24 w-24 rounded-full bg-white/10 blur-xl"></div>
+          <div className="absolute -bottom-8 -left-4 h-20 w-20 rounded-full bg-pink-600/20 blur-lg"></div>
+        </button>
 
       {/* Chat Modal */}
       {showChat && (

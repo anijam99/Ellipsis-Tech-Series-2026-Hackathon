@@ -83,6 +83,7 @@ export interface FeedItem {
   quote: string;
   coverGradient?: string;
   mediaEmoji?: string;
+  imageUrl?: string;
   verified?: boolean;
   sampleComments?: FeedComment[];
 }

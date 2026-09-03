@@ -1,33 +1,4 @@
-# Dependencies
 node_modules/
-npm-debug.log
-yarn-error.log
-pnpm-debug.log
-
-# Build outputs
-dist/
-build/
-.turbo/
-
-# Environment variables
+__pycache__/
 .env
-.env.local
-.env.*.local
-
-# IDE and editor files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-.DS_Store
-
-# OS files
-Thumbs.db
-
-# Testing
-coverage/
-.nyc_output/
-
-# Misc
-*.log
+knowledge_base.md

@@ -3,6 +3,16 @@
 @tailwind utilities;
 
 @layer base {
+
+/* Hide ALL scrollbars globally for the mobile app feel */
+* {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+*::-webkit-scrollbar {
+  display: none !important;
+}
+
   /*
    * The page is the dark demo shell; the phone surface sets its own light foreground.
    * Pairing a near-black background with slate-800 text (as before) meant anything
