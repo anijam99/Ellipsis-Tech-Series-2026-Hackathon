@@ -174,10 +174,19 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({
                 setIsLoading(true);
 
                 try {
+                  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+                  if (!apiKey) {
+                    setMessages(prev => [...prev, {
+                      role: 'assistant',
+                      content: 'I am in demo mode right now. Try setting aside 20% of your take-home pay first, then check the official CPF or SupportGoWhere site for current scheme details.',
+                    }]);
+                    return;
+                  }
+
                   const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
                     headers: {
-                      Authorization: `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+                      Authorization: `Bearer ${apiKey}`,
                       'Content-Type': 'application/json',
                       'HTTP-Referer': window.location.origin,
                       'X-Title': 'Ice Kaching',
