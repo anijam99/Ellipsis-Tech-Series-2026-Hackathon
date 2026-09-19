@@ -6,6 +6,8 @@
 
 ---
 
+icekaching.kairo.sg
+
 ## 📌 Executive Summary
 
 **Ice Kaching** is a mobile-first financial companion app that transforms abstract financial prudence into a sweet, engaging, and daily habit for young Singaporeans. 
